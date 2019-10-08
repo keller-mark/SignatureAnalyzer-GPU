@@ -23,50 +23,25 @@ def createFolder(directory):
         print ('Error: Creating directory. ' +  directory)
 
 
-def run_parameter_sweep(parameters,data,args,Beta):
+def run_parameter_sweep(parameters,dataset,args,Beta):
     output = []
-    num_processes = torch.cuda.device_count()
-    batches = int(len(parameters) / num_processes)
-    idx = 0
     objectives = []
     nsigs = []
     times = []
-    while idx <= len(parameters)-num_processes:
-        print(idx)
-        pipe_list = []
-        processes = []
-        for rank in range(num_processes):
-            recv_end, send_end = mp.Pipe(False)
-            p = mp.Process(target=run_method_engine, args=(data, parameters.iloc[idx+rank]['a'], parameters.iloc[idx+rank]['phi'], parameters.iloc[idx+rank]['b'], Beta, 
-                                                   args.prior_on_W, args.prior_on_H, parameters.iloc[idx+rank]['K0'], args.tolerance,args.max_iter, send_end, rank,))
-            pipe_list.append(recv_end)
-            processes.append(p)
-            p.start()
 
-        result_list = [x.recv() for x in pipe_list]
-        for p in processes:
-            p.join()
-        nsig = [write_output(x[0],x[1],data.channel_names,data.sample_names,args.output_dir,
-                      parameters['label'][idx+i]) for i,x in enumerate(result_list)]
-        [nsigs.append(ns) for i,ns in enumerate(nsig)]
-        [times.append(time[3]) for i,time in enumerate(result_list)]
-        [objectives.append(obj[2]) for i,obj in enumerate(result_list)]
-        idx += num_processes
-        
-    if idx < len(parameters):
-        for i in range(len(parameters)-idx):
-            idx+=i
-            W,H,cost,time = run_method_engine(data, parameters.iloc[idx]['a'], parameters.iloc[idx]['phi'], parameters.iloc[idx]['b'], Beta, 
-                                                   args.prior_on_W, args.prior_on_H, parameters.iloc[idx]['K0'], args.tolerance,args.max_iter)
-            nsig = write_output(W,H,data.channel_names,data.sample_names,args.output_dir,
-                      parameters['label'][idx])
-            times.append(time)
-            nsigs.append(nsig)
-            objectives.append(cost)
+    for idx in range(len(parameters)):
+        data = ARD_NMF(dataset,args.objective)
+        W,H,cost,time = run_method_engine(data, args.a, args.phi, args.b, Beta, 
+                                                args.prior_on_W, args.prior_on_H, args.K0, args.tolerance,args.max_iter)
+        nsig = write_output(W,H,data.channel_names,data.sample_names,args.output_dir,
+                    args.output_prefix + "_" + parameters['label'][idx])
+        times.append(time)
+        nsigs.append(nsig)
+        objectives.append(cost)
     parameters['nsigs'] = nsigs
     parameters['objective'] = objectives
     parameters['times'] = times
-    parameters.to_csv(args.output_dir + '/parameters_with_results.txt',sep='\t',index=None)
+    parameters.to_csv(args.output_dir + '/' + args.output_prefix + '_results.txt',sep='\t',index=None)
 
 
 def write_output(W, H, channel_names, sample_names, output_directory, label,  active_thresh = 1e-5):
@@ -163,10 +138,9 @@ def main():
     else:
             print('objective parameter should be one of "gaussian" or "poisson"')
             sys.exit()
-    data = ARD_NMF(dataset,args.objective)
     if args.parameters_file != None:
         parameters = pd.read_csv(args.parameters_file,sep='\t')
-        run_parameter_sweep(parameters,data,args,Beta)
+        run_parameter_sweep(parameters,dataset,args,Beta)
     else:
         W,H,cost,time = run_method_engine(data, args.a, args.phi, args.b, Beta, 
                                                    args.prior_on_W, args.prior_on_H, args.K0, args.tolerance,args.max_iter)
