@@ -142,6 +142,7 @@ def main():
         parameters = pd.read_csv(args.parameters_file,sep='\t')
         run_parameter_sweep(parameters,dataset,args,Beta)
     else:
+        data = ARD_NMF(dataset,args.objective)
         W,H,cost,time = run_method_engine(data, args.a, args.phi, args.b, Beta, 
                                                    args.prior_on_W, args.prior_on_H, args.K0, args.tolerance,args.max_iter)
         nsig = write_output(W,H,data.channel_names,data.sample_names,args.output_dir,args.output_prefix)
