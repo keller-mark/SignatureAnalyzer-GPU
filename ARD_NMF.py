@@ -121,9 +121,10 @@ def run_method_engine(results, a, phi, b, Beta, W_prior, H_prior, K0, tolerance,
     # initalize the NMF run
     results.initalize_data(a,phi,b,W_prior,H_prior,Beta,K0)
     # specify GPU
-    cuda_string = 'cuda:'+str(cuda_int)
+    #cuda_string = 'cuda:'+str(cuda_int)
     # copy data to GPU
-    W,H,V,Lambda,C,b0,eps_,phi = results.W.cuda(cuda_string),results.H.cuda(cuda_string),results.V.cuda(cuda_string),results.Lambda.cuda(cuda_string),results.C.cuda(cuda_string),results.b.cuda(cuda_string),results.eps_.cuda(cuda_string),results.phi.cuda(cuda_string)    
+    #W,H,V,Lambda,C,b0,eps_,phi = results.W.cuda(cuda_string),results.H.cuda(cuda_string),results.V.cuda(cuda_string),results.Lambda.cuda(cuda_string),results.C.cuda(cuda_string),results.b.cuda(cuda_string),results.eps_.cuda(cuda_string),results.phi.cuda(cuda_string)    
+    W,H,V,Lambda,C,b0,eps_,phi = results.W,results.H,results.V,results.Lambda,results.C,results.b,results.eps_,results.phi
     
     # tracking variables
     deltrack = 1000

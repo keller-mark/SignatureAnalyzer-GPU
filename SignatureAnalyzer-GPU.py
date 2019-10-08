@@ -9,7 +9,7 @@ import pickle
 import torch
 import NMF_functions 
 from ARD_NMF import ARD_NMF
-import feather
+import pyarrow.feather as feather
 from ARD_NMF import run_method_engine
 import torch.nn as nn
 import torch.multiprocessing as mp
@@ -123,6 +123,7 @@ def main():
                         ,required = False, default = 'L1',type=str)
 
     parser.add_argument('--output_dir', help='output_file_name if run in array mode this correspond to the output directory', required=True)
+    parser.add_argument('--output_prefix', help='Prefix for output files', required=False, default="result", type=str)
     parser.add_argument('--labeled', help='Input has row and column labels', required=False,default=False, action='store_true')
     parser.add_argument('--report_frequency', help='Number of iterations between progress reports', required=False,
                         default=100, type=int)
@@ -169,8 +170,7 @@ def main():
     else:
         W,H,cost,time = run_method_engine(data, args.a, args.phi, args.b, Beta, 
                                                    args.prior_on_W, args.prior_on_H, args.K0, args.tolerance,args.max_iter)
-        nsig = write_output(W,H,data.channel_names,data.sample_names,args.output_dir,args.output_dir
-                      )
+        nsig = write_output(W,H,data.channel_names,data.sample_names,args.output_dir,args.output_prefix)
 if __name__ == "__main__":
     
     main()
